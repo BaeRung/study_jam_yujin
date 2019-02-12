@@ -1,0 +1,68 @@
+<<Google Cloud Speech API : Qwik Start>>
+
+<Activate Google Cloud Shell>
+lab terminal에서
+(명령어) 
+gcloud auth list -> 활성화된 계정이름을 볼 수 있음
+gcloud config list project  -> 프로젝트 id
+
+<Create an API key>
+APIs&Services -> credentials ->create credentials -> API keys
+KEY복사후
+export API_KEY=복사한키
+
+<speech API request> (? : 저 용어 무엇?)
+touch request.json ->speech API 에 대한 request 만들라고
+editor로 연다(vim, gcloud, emacs, nano
+그다음에 
+{
+  "config": {
+      "encoding":"FLAC",
+      "sample_rate": 16000,
+      "language_code": "en-US"
+  },
+  "audio": {
+      "uri":"gs://cloud-samples-tests/speech/brooklyn.flac"
+  }
+}
+저장
+-> 이제 body에 config랑 audio가 있을 것이다
+config :
+ - speech API 가 request를 어떻게 처리하는지를 알 수 있음
+ 1) encoding parameter : file이 API로 보낼때 어떤 타입의 audio encoding을 하는 API인지 앎
+   - FLAC : .raw file을 위한 encoding type
+ 2) sample_rate : 내가 API로 보내는 audio data의 Hertz rate
+
+audio 객체(object) :
+ - Cloud 저장소안의 audio file의 uri pass
+
+<call the speeck API>
+ ->curl명령어 사용
+curl -s -X POST -H "Content-Type: application/json" --data-binary @request.json \
+"https://speech.googleapis.com/v1beta1/speech:syncrecognize?key=${API_KEY}"
+ - 명령어 사용시에 나오는 결과창
+{
+  "results": [
+    {
+      "alternatives": [
+        {
+          "transcript": "how old is the Brooklyn Bridge",
+          "confidence": 0.9835046
+        }
+      ]
+    }
+  ]
+}
+ value 설명 :
+ 1) transcript : Speech API의 내 audio file의 text로 변환한 것을 return함
+ 2) confidence : 얼마나 정확하게 내 audio를 번역했는지를 나타내는 수치
+
+ 명령어설명 :
+  - syncrecognize method : Speech API 는 synchronous 와 asynchronous 둘다 사용(speech에서 text변환시)
+
+
+= 다음 수업 :  Baseline: Data, ML, AI - learning path을 form하는 lab들과 관련있는 series
+ -> 내badge나 public badge를 만들 수 있고, 그것들을 온라인 이력서나 소셜미디어 계정에 연결시킬 수 있음
+
+
+

@@ -1,0 +1,33 @@
+<스터디잼 공지사항>
+
+본인 그룹 내에 본 메일을 수신하지 못한 멤버(그룹장, 그룹원 모두)가 있다면, 반드시 전달해 주시기를 부탁드립니다.
+
+여러분, 안녕하세요!
+머신러닝 스터디 잼 입문반에 참가하신 것을 환영합니다!
+
+본 메일은 스터디의 시작부터 스터디 잼 종료 후 수료까지의 모든 중요 가이드라인을 포함하고 있으므로 원활한 진행을 위해 반드시 숙지하시고 이행해 주십시오.
+
+(필수) 퀵랩 쿠폰 등록법
+1) 2/11 5PM부터 2/12 5PM사이에 캠페인 링크에 접속
+2) "Get Started"를 클릭 후 팝업창에 스터디 잼 코드 입력: 1s-seoul-5572
+3) 해당 브라우저 창에서 Join 또는 Sign in 후 "My Account > Credits & Subscriptions" 내에서 1 Month Pass가 활성화 된 것을 확인
+4) 스터디 시작!
+
+(필수) 머신러닝 스터디 잼 입문반 수료 미션: 아래 4개의 랩을 모두 2/24까지 완료
+* Google Cloud Speech API: Qwik Start
+* Cloud Natural Language API: Qwik Start
+* Speech to Text Transcription with the Cloud Speech API
+* Entity and Sentiment Analysis with the Natural Language API
+
+(필수) 퀵랩 계정 제출
+쿠폰을 활성화한 퀵랩 계정의 정보를 입력서식을 통해 제출 (총 7문항)
+
+(선택) 슬랙 채널
+그룹장, 그룹원 모두의 소통과 질의응답을 위해 마련된 슬랙 채널에 가입
+
+
+퀵랩 사용에 문제가 발생한 경우 Support@Qwiklabs.com에 영문으로 문의해 주시면 24시간 내에 답변 받으실 수 있습니다.
+그럼 즐거운 스터디 되시길 바랍니다!
+
+감사합니다.
+구글 개발자 생태계 팀 드림

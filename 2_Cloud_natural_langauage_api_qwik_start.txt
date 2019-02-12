@@ -1,0 +1,109 @@
+
+*gcloud : 구글 클라우드 플랫폼을 위한 command-line tool, 클라우드 shell에 이미 설치되어있음.
+
+<Create an API key>
+1. 내 project_ID와 함께 환경변수를 설정해야함(이 codelab에서 사용할 것임)
+ - 명령어 :  export GOOGLE_CLOUD_PROJECT=$(gcloud config get-value core/project)
+ - 결과창 : Your active configuration is: [cloudshell-26516]
+
+2. 새 서비스 계정(Natural Language API에 접근하기 위함) 만들기
+ - 명령어 :  gcloud iam service-accounts create my-natlang-sa \
+>   --display-name "my natural language service account"
+ - 결과창 : Created service account [my-natlang-sa].
+
+3.  그 새서비스 계정에 로그인하기위한 자격?(credentials)을 만듦
+ - 명령어 : gcloud iam service-accounts keys create ~/key.json \
+  --iam-account my-natlang-sa@${GOOGLE_CLOUD_PROJECT}.iam.gserviceaccount.com
+    (그대로 복사하면됨) 그럼 알아서 될거임
+
+4. GOOGLE_APPLICATION_CREDENTIALS 환경변수를 설정하기
+ *이 환경변수는 반드시 내가 만든 credentials JSON파일의 총 path를 설정해야함.
+ - 명령어 : export GOOGLE_APPLICATION_CREDENTIALS="/home/USER/key.json"
+
+<entity analysis(개체분석) request를 만들어보기>
+
+*entity analysis에 관해서: 
+구글의 자연어 처리 API는 감성 분석(Sentiment Analysis), 개체 분석(Entity Analysis), 구문 분석(Syntactic Analysis), 개체 감성 분석(Entity Sentiment Analysis), 내용 분류(Content Classification) 등 총 5가지 방법(Method)으로 제공된다. 
+개체 분석은 잘 알려진 텍스트의 분석 결과를 제공한다. 분석 결과로 나오는 'salience' 수치는 각 단어가 전체 문서에서 가지는 중요도(관련성)를 의미한다. 0 이상 1 이하의 값을 가지며, 1에 가까울수록 문서에서 중요한 단어라는 의미다. 
+
+출처 : http://it.chosun.com/site/data/html_dir/2018/02/07/2018020785018.html
+
+Natural Language(자연어) API의 entity analysis 해보자
+(할 문장 : Michelangelo Caravaggio, Italian painter, is known for 'The Calling of Saint Matthew')
+
+ - 명령어 : gcloud ml language analyze-entities --content="Michelangelo Caravaggio, Italian painter, is known for 'The Calling of Saint Matthew'."
+
+ - 결과창 : 
+{
+  "entities": [
+    {
+      "name": "Michelangelo Caravaggio",
+      "type": "PERSON",
+      "metadata": {
+        "wikipedia_url": "http://en.wikipedia.org/wiki/Caravaggio",
+        "mid": "/m/020bg"
+      },
+      "salience": 0.83047235,
+      "mentions": [
+        {
+          "text": {
+            "content": "Michelangelo Caravaggio",
+            "beginOffset": 0
+          },
+          "type": "PROPER"
+        },
+        {
+          "text": {
+            "content": "painter",
+            "beginOffset": 33
+          },
+          "type": "COMMON"
+        }
+      ]
+    },
+    {
+      "name": "Italian",
+      "type": "LOCATION",
+      "metadata": {
+        "mid": "/m/03rjj",
+        "wikipedia_url": "http://en.wikipedia.org/wiki/Italy"
+      },
+      "salience": 0.13870546,
+      "mentions": [
+        {
+          "text": {
+            "content": "Italian",
+            "beginOffset": 25
+          },
+          "type": "PROPER"
+        }
+      ]
+    },
+    {
+      "name": "The Calling of Saint Matthew",
+      "type": "EVENT",
+      "metadata": {
+        "mid": "/m/085_p7",
+        "wikipedia_url": "http://en.wikipedia.org/wiki/The_Calling_of_St_Matthew_(Caravaggio)"
+      },
+      "salience": 0.030822212,
+      "mentions": [
+        {
+          "text": {
+            "content": "The Calling of Saint Matthew",
+            "beginOffset": 69
+          },
+          "type": "PROPER"
+        }
+      ]
+    }
+  ],
+  "language": "en"
+}
+
+->알 수 있는 것 :
+ - entity(개체) : name, type(person, location, event 등등)
+ - metadata : 위키피디아url과 관련됨
+ - salience(구문) : 텍스트에서 나타난 이 개체가 있는 곳 의 인덱스들(indices) 
+  *salience는 0과 1사이의 범위를 가지는 번호이다. 텍스트내에서 그 개체가 가지는 중요도를 말함.
+ - mentions : 같은 entity가 다른방식으로 언급된지(?)
