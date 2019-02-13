@@ -1,0 +1,91 @@
+<<Speech to Text Transciption with the Cloud Speech API>>
+
+*Cloud Speech API는 speech를 text 번역을 하게 해줌(audio파일들 -> 80가지 언어들)
+*배우게 될 것 : 
+ 1)Speech API request를 만들어보고, curl과 함께 API를 부르기(calling)
+ 2)다른 언어들로 되어있는 audio파일들과 함께 Speech API를 불러보기
+
+<API key 만들기>
+*curl : speech api로 request를 보내려고 쓴다. 이때 내 request URL에서 pass하기위해서 API key를 만들어야함
+
+lab에서)
+APIs&services > Credentials > create credentials > API key > key복사하기
+
+명령어)
+export API_KEY=복사한거
+
+<나의 Speech API request를 만들기>
+*이 lab에서는 미리 만들어 놓은 음성파일을 사용한다(영어로 how old is the Brooklyn Bridge라고 저장되어있음)
+
+1) request.json파일을 만든다.
+touch request.json
+2) request.json내용을 에디터로 채운다
+vim이든 뭘 사용하든 상관없음
+내용:
+{
+  "config": {
+      "encoding":"FLAC",
+      "languageCode": "en-US"
+  },
+  "audio": {
+      "uri":"gs://cloud-samples-tests/speech/brooklyn.flac"
+  }
+}
+->request body는 config와 audio객체를 가진다
+*config : request를 처리하는 방법 말해줌
+ -encoding parameter : 파일을 API로 보내는 동안 어떤 타입의 encoding을 쓸지 말해줌
+ -languageCode : request를 빠져나오면 default로 영어로 함
+
+*audio : 이 lab에 대해서 Cloud Storage에 저장되어있는 audio file의 uri로 pass~
+
+<Speech API를 불러보기>
+curl -s -X POST -H "Content-Type: application/json" --data-binary @request.json \
+"https://speech.googleapis.com/v1/speech:recognize?key=${API_KEY}"
+그대로 복붙
+
+->번역결과랑 confidence(얼마나 정확히 번역된건지)가 수치로 나옴
+{
+  "results": [
+    {
+      "alternatives": [
+        {
+          "transcript": "how old is the Brooklyn Bridge",
+          "confidence": 0.9835046
+        }
+      ]
+    }
+  ]
+}
+지금까지 이 영어를 번역하는데에는 syncrecognize 방법 쓴거임
+(Speech API는 synchronous 와 asynchronous 둘다 지원(speech에서 text로 변환시))
+
+<다른 언어(프랑스 어)로 speech to text transcription을 해보자>
+(언어 지원 100가지 가능함)
+
+아까 만들었던 request.json 파일을 다시 edit하자
+ {
+  "config": {
+      "encoding":"FLAC",
+      "languageCode": "fr"
+  },
+  "audio": {
+      "uri":"gs://speech-language-samples/fr-sample.flac"
+  }
+}
+위에랑 다르게 languageCode가 fr로 바뀐것을 볼 수 있고,
+audio객체도 uri가 프랑스어로 녹음된 경로로 바뀌어있다.
+
+다시 아까 썼던 curl명령어를 쓰자
+결과창 
+{
+  "results": [
+    {
+      "alternatives": [
+        {
+          "transcript": "maitre corbeau sur un arbre perche tenait en son bec un fromage",
+          "confidence": 0.96079475
+        }
+      ]
+    }
+  ]
+}
