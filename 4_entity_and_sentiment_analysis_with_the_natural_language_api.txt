@@ -1,0 +1,348 @@
+<<entity와 sentiment 분석(자연어 API)>>
+
+*Cloud Natural Language API 는 text로 부터 entities(개체들)을 추출하게 하고,
+ sentiment(감정), syntactic(구문)분석을 하며, text를 category들로 분류한다.
+
+*배우게 될 것 :
+ 1) 자연어API request를 만들고, curl로 API를 불러보기
+ 2) 개체를 추출해보고, 감정 분석을 실행해본다.(자연어API와 함께 텍스트에서)
+ 3) linguistic 분석을 수행해본다. (자연어 API와 함께 텍스트에서)
+ 4) 다른 언어로 자연어 API request를 만들어본다.
+
+<API Key를 만든다>
+1번이나 3번 설명 참조하기
+(key만든 후 복사한다음에 export API_KEY=복사한거)
+
+<entity 분석request 만들기>
+첫번째 자연어API method는 analyzeEntities : API는 entities(people, places, events)추출해낼 수 있음(text로부터)
+
+사용할 text:
+Joanne Rowling, who writes under the pen names J. K. Rowling and Robert Galbraith, is a British novelist and screenwriter who wrote the Harry Potter fantasy series.
+
+ 1) request.json파일을 touch해서 만든다
+ 2) 터미널쪽에 펜모양(Cloud shell editor)을 클릭하던지, nano, vim, emacs를 사용해서 request.json파일을 다음과 같이 수정한다
+ {
+  "document":{
+    "type":"PLAIN_TEXT",
+    "content":"Joanne Rowling, who writes under the pen names J. K. Rowling and Robert Galbraith, is a British novelist and screenwriter who wrote the Harry Potter fantasy series."
+  },
+  "encodingType":"UTF8"
+}
+request에서, 보내진 text에 대해서 자연어API를 말하고 있다.
+ - type value에서 가질 수 있는 값은 위와 같이 PLAIN_TEXT나 HTML가 있다.
+ - 자연어 API는 text 처리를 위한 cloud 저장소에서 보낸 file들을 또한 보관하고있다.
+ - 만약 클라우드 저장소로부터 파일을 보내고 싶을때는, gcsContentUri를 통해 content를 대체가능함
+
+<자연어API를 불러보기> (개체분석관련임 - 개체의 type과 문장전체에서 중요도를 알 수 있다.)
+curl "https://language.googleapis.com/v1/documents:analyzeEntities?key=${API_KEY}" \
+  -s -X POST -H "Content-Type: application/json" --data-binary @request.json
+시행시(analyzeEntities method를 사용하고 있음)
+
+결과창
+{
+  "entities": [
+     {
+      "name": "Robert Galbraith",
+      "type": "PERSON",
+      "metadata": {
+        "mid": "/m/042xh",
+        "wikipedia_url": "https://en.wikipedia.org/wiki/J._K._Rowling"
+      },
+      "salience": 0.7980405,
+      "mentions": [
+        {
+          "text": {
+            "content": "Joanne Rowling",
+            "beginOffset": 0
+          },
+          "type": "PROPER"
+        },
+        {
+          "text": {
+            "content": "Rowling",
+            "beginOffset": 53
+          },
+          "type": "PROPER"
+        },
+        {
+          "text": {
+            "content": "novelist",
+            "beginOffset": 96
+          },
+          "type": "COMMON"
+        },
+        {
+          "text": {
+            "content": "Robert Galbraith",
+            "beginOffset": 65
+          },
+          "type": "PROPER"
+        }
+      ]
+    },
+
+    ...
+  ]
+}
+(중간 생략되어있음)
+salience : 0~1사이 값을가지며, 전체 text에서 가지는 중요도를 의미함
+mentions를 보면, 거기 묶여있는거 보면, "Joanne Rowling", "Rowling", "novelist" and "Robert Galbriath" 
+이거 다 같은거 가리키고있음을 알수있음. (자연어 API는 같은 개체를 다른 방식으로 언급한것도 알아차릴 수 있음)
+
+<자연어API와 함게하는 sentiment(감정)분석> (analyzeSentiment 방법사용 : 문장단위로 sentiment분석함)
+ {
+  "document":{
+    "type":"PLAIN_TEXT",
+    "content":"Harry Potter is the best book. I think everyone should read it."
+  },
+  "encodingType": "UTF8"
+}
+request.json파일을 다음과 같이 바꿔라
+내용을 보면 전 보다 더 감정적인 단어를 포함하고있다.
+
+API의 analyzeSentiment endporint request를 보낼 것임.
+curl "https://language.googleapis.com/v1/documents:analyzeSentiment?key=${API_KEY}" \
+  -s -X POST -H "Content-Type: application/json" --data-binary @request.json
+실행
+(analyzeSentiment method 사용하고 있음)
+결과창
+{
+  "documentSentiment": {
+    "magnitude": 0.8,
+    "score": 0.4
+  },
+  "language": "en",
+  "sentences": [
+    {
+      "text": {
+        "content": "Harry Potter is the best book.",
+        "beginOffset": 0
+      },
+      "sentiment": {
+        "magnitude": 0.7,
+        "score": 0.7
+      }
+    },
+    {
+      "text": {
+        "content": "I think everyone should read it.",
+        "beginOffset": 31
+      },
+      "sentiment": {
+        "magnitude": 0.1,
+        "score": 0.1
+      }
+    }
+  ]
+}
+sentiment 값의 두 타입을 얻을 수 있다.
+ - score : -1.0 ~ 1.0 사이 값을 가짐. 그 statement가 얼마나 긍정적인지 아님 부정적인지 나타냄
+ - magnitude : 0 ~ 무한대 까지 값을 가짐. 긍정,부정적인 것과는 상관없이 statement에서 표현된 sentiment의 무게를 나타냄
+
+텍스트의 더 긴 블록일수록 더 큰 magnitude값을 가짐. 위에 두문장을 보면 0.7, 0.1 을 보면 알 수 있음
+
+<개체 감정 분석하기(analyzing entity sentiment)> (analyzeEntitySentiment 방법 사용 : 개체단위로 sentiment 분석가능하다)
+I liked the sushi but the service was terrible.
+
+이 문장을 분석할때에는 analzeEntitySentiment method가 유용하다.
+(만약 음식점 리뷰일때에 거기는 수백개의 리뷰가 있을 것이고, 나는 정확히 어떤 것들을 사람들이 좋아하고 안좋아하는지를 리뷰에서 알 필요는 없음)
+ > 문장에서 개체(entity)가 가지는 감정(sentiment)를 분석하는게 이 문장을 분석할 때 더 좋다.
+
+1)request.json 파일을 밑과 같이 바꾼다.
+ {
+  "document":{
+    "type":"PLAIN_TEXT",
+    "content":"I liked the sushi but the service was terrible."
+  },
+  "encodingType": "UTF8"
+}
+2) curl "https://language.googleapis.com/v1/documents:analyzeEntitySentiment?key=${API_KEY}" \
+  -s -X POST -H "Content-Type: application/json" --data-binary @request.json
+(analyzeEntitySentiment 방법 사용함)
+
+3) 결과창
+{
+  "entities": [
+    {
+      "name": "sushi",
+      "type": "CONSUMER_GOOD",
+      "metadata": {},
+      "salience": 0.52716845,
+      "mentions": [
+        {
+          "text": {
+            "content": "sushi",
+            "beginOffset": 12
+          },
+          "type": "COMMON",
+          "sentiment": {
+            "magnitude": 0.9,
+            "score": 0.9
+          }
+        }
+      ],
+      "sentiment": {
+        "magnitude": 0.9,
+        "score": 0.9
+      }
+    },
+    {
+      "name": "service",
+      "type": "OTHER",
+      "metadata": {},
+      "salience": 0.47283158,
+      "mentions": [
+        {
+          "text": {
+            "content": "service",
+            "beginOffset": 26
+          },
+          "type": "COMMON",
+          "sentiment": {
+            "magnitude": 0.9,
+            "score": -0.9
+          }
+        }
+      ],
+      "sentiment": {
+        "magnitude": 0.9,
+        "score": -0.9
+      }
+    }
+  ],
+  "language": "en"
+}
+여기서 문장에서 적힌 듯이 sushi는 맛있었으나, 서비스는 엉망이었다고 했으므로
+각각 그 개체 sushi라는 entity의 sentiment를 분석하니, score가 0.9였고, service는 -0.9였다.
+이런식으로 사람 모두의 취향을 알 필요없이, 리뷰에서 필요한 것은 어떤 것은 어떻고, 다른것은 어떤지가 필요할 때 이 방법을 사용한다.
+
+<syntax(구문)과 speech의 부분을 분석하기>
+* annotateText method : text에 주석달기 방법. 텍스트의 언어적인 디테일들로 깊게 들어갈 수 있음.
+  텍스트의 semantic(의미) 과 syntactic(구문)요소의 디테일들의 모든 세트를 제공한다. 
+  text에서 각각의 단어를 통해, API가 우리에게 speech의 파트들(명사, 동사, 형용사 등)이  문장안에서 다른 단어들과 어떻게 관계되어있는지를 말해준다.(root 동사인지, 수식어인지 등등)
+
+분석할 문장 : Joanne Rowling is a British novelist, screenwriter and film producer.
+
+request.json에 들어갈 내용
+{
+  "document":{
+    "type":"PLAIN_TEXT",
+    "content": "Joanne Rowling is a British novelist, screenwriter and film producer."
+  },
+  "encodingType": "UTF8"
+}
+
+annotateText방법을 사용해서 불러보기
+curl "https://language.googleapis.com/v1/documents:analyzeSyntax?key=${API_KEY}" \
+  -s -X POST -H "Content-Type: application/json" --data-binary @request.json
+
+결과창)
+{
+  "sentences": [
+    {
+      "text": {
+        "content": "Joanne Rowling is a British novelist, screenwriter and film producer.",
+        "beginOffset": 0
+      }
+    }
+  ],
+"tokens": [
+    {
+      "text": {
+        "content": "Joanne",
+        "beginOffset": 0
+      },
+      "partOfSpeech": {
+        "tag": "NOUN",
+        "aspect": "ASPECT_UNKNOWN",
+        "case": "CASE_UNKNOWN",
+        "form": "FORM_UNKNOWN",
+        "gender": "GENDER_UNKNOWN",
+        "mood": "MOOD_UNKNOWN",
+        "number": "SINGULAR",
+        "person": "PERSON_UNKNOWN",
+        "proper": "PROPER",
+        "reciprocity": "RECIPROCITY_UNKNOWN",
+        "tense": "TENSE_UNKNOWN",
+        "voice": "VOICE_UNKNOWN"
+      },
+      "dependencyEdge": {
+        "headTokenIndex": 1,
+        "label": "NN"
+      },
+      "lemma": "Joanne"
+    },
+   등등등 각 단어별로 token으로 감싸져서 각각의 단어들은 text, partOfSpeech, dependencyEdge, lemma등을 갖는다.
+
+Joanne를 예시로 본다면, 
+ * partOfSpeech : 위의 예에서 보면 Joanne는 ''명사''임을 알 수 있다.
+ * dependencyEdge :  이 부분들을 보아서 나는 dependency parse tree(문장에서 단어들간에 서로 관계를 알 수 있는 것)를 만들 수 있다.
+   **나만의 dependenct parse tree를 만들 수 있는 사이트 : [https://cloud.google.com/natural-language](https://cloud.google.com/natural-language/)
+   * headTokenIndex : 1인데, 이것은 Rowling이 tree에 연결되어있다는 말이다.
+   * label : NN(noun compound modifier) 인데, 이것은 문장에서 그 단어의 역할을 말해준다. 
+      여기서는 , Joanne는 Rowling(문장의 subject)을 수식한다. 
+ * lemma : 단어의 canonical 형태이다. (예로들면, run, runs, ran, running의 lemma는 run이다.)
+               The lemma value is useful for tracking occurrences of a word in a large piece of text over time.
+
+<다양한 자연어 처리>
+
+이번엔 일본어를 처리해 볼 것이다.
+request.json내용:
+{
+  "document":{
+    "type":"PLAIN_TEXT",
+    "content":"日本のグ?グルのオフィスは、東京の六本木ヒルズにあります"
+  }
+}
+
+analyzeEntities방법을 사용한다.
+curl "https://language.googleapis.com/v1/documents:analyzeEntities?key=${API_KEY}" \
+  -s -X POST -H "Content-Type: application/json" --data-binary @request.json
+
+결과창)
+
+{
+  "entities": [
+    {
+      "name": "日本",
+      "type": "LOCATION",
+      "metadata": {
+        "mid": "/m/03_3d",
+        "wikipedia_url": "https://en.wikipedia.org/wiki/Japan"
+      },
+      "salience": 0.23854347,
+      "mentions": [
+        {
+          "text": {
+            "content": "日本",
+            "beginOffset": 0
+          },
+          "type": "PROPER"
+        }
+      ]
+    },
+    {
+      "name": "グ?グル",
+      "type": "ORGANIZATION",
+      "metadata": {
+        "mid": "/m/045c7b",
+        "wikipedia_url": "https://en.wikipedia.org/wiki/Google"
+      },
+      "salience": 0.21155767,
+      "mentions": [
+        {
+          "text": {
+            "content": "グ?グル",
+            "beginOffset": 9
+          },
+          "type": "PROPER"
+        }
+      ]
+    },
+    ...
+  ]
+  "language": "ja"
+}
+
+-> 배운 것 : extracting entties, analyzing sentiment, doing syntax annotation
+
