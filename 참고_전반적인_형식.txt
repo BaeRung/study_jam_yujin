@@ -1,0 +1,5 @@
+*전반적인 형식
+lab을 튼다 > lab의 API키를 새로 발급받고 복사한다음, export API_KEY=복사한거 한다.
+> request.json을 만든다. > request.json에 들어가서 내용을 편집한다.(분석?할 문장포함)
+> curl명령어를 사용해서 어떻게 결과가 나왔는지 본다. 이때 분석할 문장따라서 방법을 달리한다.
+(방법 종류 : analyzeEntities, analyzeSentiment, analyzeEntitySentiment, annotateText
